@@ -9,8 +9,11 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import dagre from 'dagre';
-import { CoreService } from '../api';
-import { Node, Edge, Position } from 'reactflow';
+import { CoreService, ReductionTypeEnum } from '../api';
+import { Node, Edge, Position, Connection } from 'reactflow';
+import { Panel } from 'reactflow';
+import { SubmitProblemForm } from '../components/SubmitProblemForm';
+
 
 import { ProblemNode } from '../components/ProblemNode';
 
@@ -52,8 +55,19 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
 };
 
 export const GraphView: React.FC = () => {
+
+
+
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [isProblemModalOpen, setIsProblemModalOpen] = React.useState(false);
+  const [filterText, setFilterText] = React.useState('');
+  const [rawProblems, setRawProblems] = React.useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [rawReductions, setRawReductions] = React.useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+
+
+
 
   const fetchData = useCallback(async () => {
     try {
@@ -61,43 +75,78 @@ export const GraphView: React.FC = () => {
         CoreService.getProblemsApiProblemsGet(),
         CoreService.getReductionsApiReductionsGet()
       ]);
-
-      const initialNodes: Node[] = problems.map((p) => ({
-        id: p.id,
-        type: 'problemNode',
-        data: { ...p },
-        position: { x: 0, y: 0 },
-      }));
-
-      const initialEdges: Edge[] = reductions.map((r) => ({
-        id: r.id,
-        source: r.source_id,
-        target: r.target_id,
-        label: r.technique || undefined,
-        animated: r.type === 'Randomized',
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          width: 20,
-          height: 20,
-        },
-        style: {
-          strokeWidth: 2,
-          stroke: r.type === 'Randomized' ? '#f59e0b' : '#6366f1',
-        }
-      }));
-
-      const layouted = getLayoutedElements(initialNodes, initialEdges);
-      setNodes([...layouted.nodes]);
-      setEdges([...layouted.edges]);
-
+      setRawProblems(problems);
+      setRawReductions(reductions);
     } catch (error) {
       console.error("Failed to load graph data", error);
     }
-  }, [setNodes, setEdges]);
+  }, []);
+
+  const onConnect = useCallback(async (params: Connection | Edge) => {
+    if (!params.source || !params.target) return;
+
+    const technique = window.prompt("Enter reduction technique (optional):");
+    const isRandomized = window.confirm("Is this a randomized reduction? (OK for yes, Cancel for no)");
+
+    try {
+      await CoreService.createReductionApiReductionsPost({
+        source_id: params.source,
+        target_id: params.target,
+        technique: technique || null,
+        type: isRandomized ? ReductionTypeEnum.RANDOMIZED : ReductionTypeEnum.DETERMINISTIC,
+      });
+      void fetchData();
+    } catch (error) {
+      console.error("Failed to create reduction", error);
+      alert("Failed to create reduction");
+    }
+  }, [fetchData]);
 
   useEffect(() => {
-    fetchData();
+    void fetchData(); // eslint-disable-line react-hooks/set-state-in-effect
   }, [fetchData]);
+
+  useEffect(() => {
+    if (rawProblems.length === 0 && rawReductions.length === 0) return;
+
+    const initialNodes: Node[] = rawProblems.map((p) => {
+      const isFilterActive = filterText.trim().length > 0;
+      const matchesFilter = isFilterActive && (
+        (p.title && p.title.toLowerCase().includes(filterText.toLowerCase())) ||
+        (p.current_runtime && p.current_runtime.toLowerCase().includes(filterText.toLowerCase())) ||
+        (p.complexity_class && p.complexity_class.toLowerCase().includes(filterText.toLowerCase()))
+      );
+
+      return {
+        id: p.id,
+        type: 'problemNode',
+        data: { ...p, isFilterActive, isHighlighted: matchesFilter },
+        position: { x: 0, y: 0 },
+      };
+    });
+
+    const initialEdges: Edge[] = rawReductions.map((r) => ({
+      id: r.id,
+      source: r.source_id,
+      target: r.target_id,
+      label: r.technique || undefined,
+      animated: r.type === ReductionTypeEnum.RANDOMIZED,
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        width: 20,
+        height: 20,
+      },
+      style: {
+        strokeWidth: 2,
+        stroke: r.type === ReductionTypeEnum.RANDOMIZED ? '#f59e0b' : '#6366f1',
+      }
+    }));
+
+    const layouted = getLayoutedElements(initialNodes, initialEdges);
+    setNodes([...layouted.nodes]);
+    setEdges([...layouted.edges]);
+  }, [rawProblems, rawReductions, filterText, setNodes, setEdges]);
+
 
   return (
     <div style={{ width: '100%', height: 'calc(100vh - 120px)' }}>
@@ -106,14 +155,48 @@ export const GraphView: React.FC = () => {
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
         nodeTypes={nodeTypes}
         fitView
         className="bg-gray-50"
       >
+
         <Controls />
         <MiniMap />
         <Background gap={12} size={1} />
+        <Panel position="top-right" className="bg-white p-2 rounded shadow flex gap-2 items-center">
+          <input
+            type="text"
+            placeholder="Search problems, runtimes..."
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
+            className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <button
+            onClick={() => setIsProblemModalOpen(true)}
+            className="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700"
+          >
+            Add Problem
+          </button>
+        </Panel>
       </ReactFlow>
+
+      {isProblemModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-6">
+            <h2 className="text-xl font-bold mb-4">Add New Problem</h2>
+            <SubmitProblemForm
+              isModal={true}
+              onCancel={() => setIsProblemModalOpen(false)}
+              onSuccess={() => {
+                setIsProblemModalOpen(false);
+                void fetchData();
+              }}
+            />
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

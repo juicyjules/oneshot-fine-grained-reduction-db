@@ -4,7 +4,7 @@ import katex from 'katex';
 import 'katex/dist/katex.min.css';
 
 export const ProblemNode: React.FC<NodeProps> = ({ data, selected }) => {
-  const { title, complexity_class, current_runtime, is_assumption } = data;
+  const { title, complexity_class, current_runtime, is_assumption, isFilterActive, isHighlighted } = data;
 
   const renderMath = (math: string) => {
     try {
@@ -15,7 +15,7 @@ export const ProblemNode: React.FC<NodeProps> = ({ data, selected }) => {
   };
 
   return (
-    <div className={`px-5 py-3 shadow-lg rounded-xl bg-gradient-to-br from-white to-gray-50 border-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${selected ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-gray-200'} ${is_assumption ? 'border-dashed border-orange-400 from-orange-50 to-orange-100/50' : ''} min-w-[180px] max-w-[250px] w-[250px]`}>
+    <div className={`px-5 py-3 shadow-lg rounded-xl bg-gradient-to-br from-white to-gray-50 border-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${selected ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-gray-200'} ${is_assumption ? 'border-dashed border-orange-400 from-orange-50 to-orange-100/50' : ''} ${isFilterActive && !isHighlighted ? 'opacity-30 grayscale' : ''} ${isHighlighted ? 'ring-2 ring-yellow-400' : ''} min-w-[180px] max-w-[250px] w-[250px]`}>
       <Handle type="target" position={Position.Top} className="w-16 h-2 !bg-indigo-500 !rounded-full border-none shadow-sm" />
       <div className="flex flex-col">
         <div className="flex justify-between items-start mb-2 gap-2">
