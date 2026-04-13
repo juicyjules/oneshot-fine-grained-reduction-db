@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+
 import type { ProblemCreate } from '../models/ProblemCreate';
 import type { ProblemRead } from '../models/ProblemRead';
 import type { ReductionCreate } from '../models/ReductionCreate';

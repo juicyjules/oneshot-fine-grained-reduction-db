@@ -10,6 +10,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import dagre from 'dagre';
 import { CoreService } from '../api';
+import { Node, Edge, Position } from 'reactflow';
 
 import { ProblemNode } from '../components/ProblemNode';
 
@@ -20,12 +21,12 @@ const nodeTypes = {
 const dagreGraph = new dagre.graphlib.Graph();
 dagreGraph.setDefaultEdgeLabel(() => ({}));
 
-const getLayoutedElements = (nodes: any[], edges: any[], direction = 'TB') => {
+const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
   const isHorizontal = direction === 'LR';
   dagreGraph.setGraph({ rankdir: direction });
 
   nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: 150, height: 80 });
+    dagreGraph.setNode(node.id, { width: 300, height: 120 });
   });
 
   edges.forEach((edge) => {
@@ -36,12 +37,12 @@ const getLayoutedElements = (nodes: any[], edges: any[], direction = 'TB') => {
 
   nodes.forEach((node) => {
     const nodeWithPosition = dagreGraph.node(node.id);
-    node.targetPosition = isHorizontal ? 'left' : 'top';
-    node.sourcePosition = isHorizontal ? 'right' : 'bottom';
+    node.targetPosition = isHorizontal ? Position.Left : Position.Top;
+    node.sourcePosition = isHorizontal ? Position.Right : Position.Bottom;
 
     node.position = {
-      x: nodeWithPosition.x - 150 / 2,
-      y: nodeWithPosition.y - 80 / 2,
+      x: nodeWithPosition.x - 300 / 2,
+      y: nodeWithPosition.y - 120 / 2,
     };
 
     return node;
@@ -61,14 +62,14 @@ export const GraphView: React.FC = () => {
         CoreService.getReductionsApiReductionsGet()
       ]);
 
-      const initialNodes = problems.map((p: any) => ({
+      const initialNodes: Node[] = problems.map((p) => ({
         id: p.id,
         type: 'problemNode',
         data: { ...p },
         position: { x: 0, y: 0 },
       }));
 
-      const initialEdges = reductions.map((r: any) => ({
+      const initialEdges: Edge[] = reductions.map((r) => ({
         id: r.id,
         source: r.source_id,
         target: r.target_id,
