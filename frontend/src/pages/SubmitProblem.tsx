@@ -8,16 +8,16 @@ const problemSchema = z.object({
   slug: z.string().min(1),
   title: z.string().min(1),
   description: z.string().min(1),
-  latex_definition: z.string().optional(),
-  complexity_class: z.string().optional(),
-  is_assumption: z.boolean().optional().default(false),
-  current_runtime: z.string().optional(),
+  latex_definition: z.string().nullable().optional(),
+  complexity_class: z.string().nullable().optional(),
+  is_assumption: z.boolean().optional(),
+  current_runtime: z.string().nullable().optional(),
 });
 
 type ProblemForm = z.infer<typeof problemSchema>;
 
 export const SubmitProblem: React.FC = () => {
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<any>({
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<ProblemForm>({
     resolver: zodResolver(problemSchema),
   });
 
