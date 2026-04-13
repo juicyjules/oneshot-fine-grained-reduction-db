@@ -14,11 +14,11 @@
       {
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
-            python311
-            python311Packages.pip
-            python311Packages.virtualenv
+            python313
+            python313Packages.pip
+            python313Packages.virtualenv
             nodejs_20
-            nodePackages.npm
+            pnpm
             sqlite
             stdenv.cc.cc.lib
             zlib
