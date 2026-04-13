@@ -14,9 +14,26 @@ export const ProblemNode: React.FC<NodeProps> = ({ data, selected }) => {
     }
   };
 
+  // Pre-generate handles at 10% to 90%
+  const handlePositions = Array.from({ length: 9 }, (_, i) => (i + 1) * 10);
+
   return (
     <div className={`px-5 py-3 shadow-lg rounded-xl bg-gradient-to-br from-white to-gray-50 border-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${selected ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-gray-200'} ${is_assumption ? 'border-dashed border-orange-400 from-orange-50 to-orange-100/50' : ''} ${isFilterActive && !isHighlighted ? 'opacity-30 grayscale' : ''} ${isHighlighted ? 'ring-2 ring-yellow-400' : ''} min-w-[180px] max-w-[250px] w-[250px]`}>
-      <Handle type="target" position={Position.Top} className="w-16 h-2 !bg-indigo-500 !rounded-full border-none shadow-sm" />
+
+      {/* Default Target Handle (hidden but accepts general drops) */}
+      <Handle type="target" position={Position.Top} className="opacity-0 z-0" />
+      {/* Dynamic Target Handles */}
+      {handlePositions.map(pos => (
+        <Handle
+          key={`t-${pos}`}
+          type="target"
+          id={`t-${pos}`}
+          position={Position.Top}
+          className="w-3 h-3 !bg-indigo-500 !border-2 !border-white shadow-sm z-10"
+          style={{ left: `${pos}%` }}
+        />
+      ))}
+
       <div className="flex flex-col">
         <div className="flex justify-between items-start mb-2 gap-2">
           <div className="font-bold text-base text-gray-800 leading-tight break-words">{title}</div>
@@ -41,7 +58,20 @@ export const ProblemNode: React.FC<NodeProps> = ({ data, selected }) => {
           </div>
         )}
       </div>
-      <Handle type="source" position={Position.Bottom} className="w-16 h-2 !bg-indigo-500 !rounded-full border-none shadow-sm" />
+
+      {/* Default Source Handle (hidden but accepts general drops) */}
+      <Handle type="source" position={Position.Bottom} className="opacity-0 z-0" />
+      {/* Dynamic Source Handles */}
+      {handlePositions.map(pos => (
+        <Handle
+          key={`s-${pos}`}
+          type="source"
+          id={`s-${pos}`}
+          position={Position.Bottom}
+          className="w-3 h-3 !bg-indigo-500 !border-2 !border-white shadow-sm z-10"
+          style={{ left: `${pos}%` }}
+        />
+      ))}
     </div>
   );
 };

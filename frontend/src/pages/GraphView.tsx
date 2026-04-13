@@ -1,3 +1,4 @@
+import { getSpacedEdges } from '../utils/edgeRouting';
 import React, { useCallback, useEffect } from 'react';
 import ReactFlow, {
   MiniMap,
@@ -13,6 +14,7 @@ import { CoreService, ReductionTypeEnum } from '../api';
 import { Node, Edge, Position, Connection } from 'reactflow';
 import { Panel } from 'reactflow';
 import { SubmitProblemForm } from '../components/SubmitProblemForm';
+import { AddReductionModal } from '../components/AddReductionModal';
 
 
 import { ProblemNode } from '../components/ProblemNode';
@@ -26,7 +28,7 @@ dagreGraph.setDefaultEdgeLabel(() => ({}));
 
 const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
   const isHorizontal = direction === 'LR';
-  dagreGraph.setGraph({ rankdir: direction });
+  dagreGraph.setGraph({ rankdir: direction, ranksep: 100, nodesep: 150 });
 
   nodes.forEach((node) => {
     dagreGraph.setNode(node.id, { width: 300, height: 120 });
@@ -64,6 +66,7 @@ export const GraphView: React.FC = () => {
   const [filterText, setFilterText] = React.useState('');
   const [rawProblems, setRawProblems] = React.useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [rawReductions, setRawReductions] = React.useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [pendingConnection, setPendingConnection] = React.useState<Connection | Edge | null>(null);
 
 
 
@@ -82,25 +85,10 @@ export const GraphView: React.FC = () => {
     }
   }, []);
 
-  const onConnect = useCallback(async (params: Connection | Edge) => {
+  const onConnect = useCallback((params: Connection | Edge) => {
     if (!params.source || !params.target) return;
-
-    const technique = window.prompt("Enter reduction technique (optional):");
-    const isRandomized = window.confirm("Is this a randomized reduction? (OK for yes, Cancel for no)");
-
-    try {
-      await CoreService.createReductionApiReductionsPost({
-        source_id: params.source,
-        target_id: params.target,
-        technique: technique || null,
-        type: isRandomized ? ReductionTypeEnum.RANDOMIZED : ReductionTypeEnum.DETERMINISTIC,
-      });
-      void fetchData();
-    } catch (error) {
-      console.error("Failed to create reduction", error);
-      alert("Failed to create reduction");
-    }
-  }, [fetchData]);
+    setPendingConnection(params);
+  }, []);
 
   useEffect(() => {
     void fetchData(); // eslint-disable-line react-hooks/set-state-in-effect
@@ -125,7 +113,7 @@ export const GraphView: React.FC = () => {
       };
     });
 
-    const initialEdges: Edge[] = rawReductions.map((r) => ({
+    const baseEdges: Edge[] = rawReductions.map((r) => ({
       id: r.id,
       source: r.source_id,
       target: r.target_id,
@@ -141,6 +129,8 @@ export const GraphView: React.FC = () => {
         stroke: r.type === ReductionTypeEnum.RANDOMIZED ? '#f59e0b' : '#6366f1',
       }
     }));
+
+    const initialEdges = getSpacedEdges(initialNodes, baseEdges);
 
     const layouted = getLayoutedElements(initialNodes, initialEdges);
     setNodes([...layouted.nodes]);
@@ -197,6 +187,16 @@ export const GraphView: React.FC = () => {
         </div>
       )}
 
+      {pendingConnection && (
+        <AddReductionModal
+          connection={pendingConnection}
+          onSuccess={() => {
+            setPendingConnection(null);
+            void fetchData();
+          }}
+          onCancel={() => setPendingConnection(null)}
+        />
+      )}
     </div>
   );
 };
