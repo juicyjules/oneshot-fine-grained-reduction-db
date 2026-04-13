@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sqlalchemy
+alembic
+pydantic
+pydantic-settings
+fastapi-users[sqlalchemy]
+sympy
+networkx
+python-dotenv
+aiosqlite

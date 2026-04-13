@@ -1,0 +1,9 @@
+{
+  "name": "fgrdb",
+  "version": "1.0.0",
+  "description": "FGRDB",
+  "scripts": {
+    "dev:backend": "cd backend && uvicorn main:app --reload",
+    "dev:frontend": "cd frontend && npm run dev"
+  }
+}
