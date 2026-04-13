@@ -29,7 +29,7 @@ export const ProblemNode: React.FC<NodeProps> = ({ data, selected }) => {
           type="target"
           id={`t-${pos}`}
           position={Position.Top}
-          className="w-3 h-3 !bg-indigo-500 !border-2 !border-white shadow-sm z-10"
+          className="w-3 h-3 !bg-indigo-500 !border-2 !border-white shadow-sm z-10 opacity-0"
           style={{ left: `${pos}%` }}
         />
       ))}
@@ -68,7 +68,7 @@ export const ProblemNode: React.FC<NodeProps> = ({ data, selected }) => {
           type="source"
           id={`s-${pos}`}
           position={Position.Bottom}
-          className="w-3 h-3 !bg-indigo-500 !border-2 !border-white shadow-sm z-10"
+          className="w-3 h-3 !bg-indigo-500 !border-2 !border-white shadow-sm z-10 opacity-0"
           style={{ left: `${pos}%` }}
         />
       ))}
