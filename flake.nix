@@ -20,6 +20,8 @@
             nodejs_20
             nodePackages.npm
             sqlite
+            stdenv.cc.cc.lib
+            zlib
           ];
 
           shellHook = ''
@@ -37,6 +39,7 @@
             # Activate virtual environment automatically
             source .venv/bin/activate
             echo "Activated Python virtual environment."
+            export LD_LIBRARY_PATH="${pkgs.stdenv.cc.cc.lib}/lib:${pkgs.zlib}/lib:$LD_LIBRARY_PATH"
           '';
         };
       });
